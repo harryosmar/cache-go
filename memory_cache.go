@@ -291,3 +291,20 @@ func bytesToInt64(b []byte) int64 {
 	fmt.Sscanf(string(b), "%d", &n)
 	return n
 }
+
+func (m *MemoryCache) ValuesByKeys(ctx context.Context, keys []string) ([]interface{}, error) {
+	var result []interface{}
+	for _, k := range keys {
+		bytes, found, err := m.Get(ctx, k)
+		if err != nil {
+			return nil, err
+		}
+		if found {
+			result = append(result, bytes)
+		} else {
+			result = append(result, nil)
+		}
+	}
+
+	return result, nil
+}

@@ -222,3 +222,18 @@ func (mr *MockCacheRepoMockRecorder) StoreWithoutTTL(arg0, arg1, arg2 interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreWithoutTTL", reflect.TypeOf((*MockCacheRepo)(nil).StoreWithoutTTL), arg0, arg1, arg2)
 }
+
+// ValuesByKeys mocks base method.
+func (m *MockCacheRepo) ValuesByKeys(arg0 context.Context, arg1 []string) ([]interface{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValuesByKeys", arg0, arg1)
+	ret0, _ := ret[0].([]interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValuesByKeys indicates an expected call of ValuesByKeys.
+func (mr *MockCacheRepoMockRecorder) ValuesByKeys(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValuesByKeys", reflect.TypeOf((*MockCacheRepo)(nil).ValuesByKeys), arg0, arg1)
+}

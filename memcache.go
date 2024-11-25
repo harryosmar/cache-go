@@ -238,3 +238,20 @@ func (m *MemcacheRepo) listOp(ctx context.Context, key string, op func([]string)
 		Value: []byte(strings.Join(values, ",")),
 	})
 }
+
+func (m *MemcacheRepo) ValuesByKeys(ctx context.Context, keys []string) ([]interface{}, error) {
+	var result []interface{}
+	for _, k := range keys {
+		bytes, found, err := m.Get(ctx, k)
+		if err != nil {
+			return nil, err
+		}
+		if found {
+			result = append(result, bytes)
+		} else {
+			result = append(result, nil)
+		}
+	}
+
+	return result, nil
+}

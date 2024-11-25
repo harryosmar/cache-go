@@ -100,3 +100,12 @@ func (c *RedisCache) Close() error {
 func (c *RedisCache) Ping(ctx context.Context) error {
 	return c.client.Ping(ctx).Err()
 }
+
+func (c *RedisCache) ValuesByKeys(ctx context.Context, keys []string) ([]interface{}, error) {
+	values, err := c.client.MGet(ctx, keys...).Result()
+	if err != nil {
+		return values, err
+	}
+
+	return values, nil
+}

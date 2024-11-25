@@ -18,6 +18,7 @@ type CacheRepo interface {
 	LTrim(ctx context.Context, key string, start int64, end int64) error
 	LRem(ctx context.Context, key string, count int64, value []byte) error
 	KeysByPattern(ctx context.Context, pattern string) ([]string, error)
+	ValuesByKeys(ctx context.Context, keys []string) ([]interface{}, error)
 	Close() error
 	Ping(ctx context.Context) error
 }
