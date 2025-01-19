@@ -51,6 +51,11 @@ func GetFromCache[TData any, TId any](
 		return nil, nil
 	}
 
+	if exp.Seconds() < 0 {
+		// skip cache
+		return dataFromSource, nil
+	}
+
 	// 2. cache dataFromSource
 	bytesFromSource, err := json.Marshal(dataFromSource)
 	if err != nil {
@@ -118,6 +123,11 @@ func GetFromCacheWithDynamicTTL[TData any, TId any](
 	}
 
 	exp := fnGetTtl(ctx, dataFromSource)
+	if exp.Seconds() < 0 {
+		// skip cache
+		return dataFromSource, nil
+	}
+
 	if exp.Seconds() == 0 {
 		err = repo.StoreWithoutTTL(ctx, key, bytesFromSource)
 		entry = entry.WithField("err_type", "call cache.StoreWithoutTTL")
