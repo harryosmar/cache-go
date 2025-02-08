@@ -50,16 +50,18 @@ func (m *MemoryCache) StoreWithoutTTL(ctx context.Context, key string, value []b
 
 func (m *MemoryCache) Get(ctx context.Context, key string) ([]byte, bool, error) {
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-
 	item, exists := m.items[key]
+	m.mu.RUnlock() // Release read lock before modifying map
+
 	if !exists {
 		return nil, false, nil
 	}
 
 	// Check if item has expired
 	if !item.expiresAt.IsZero() && time.Now().After(item.expiresAt) {
+		m.mu.Lock() // Acquire write lock before modifying map
 		delete(m.items, key)
+		m.mu.Unlock()
 		return nil, false, nil
 	}
 
@@ -80,7 +82,12 @@ func (m *MemoryCache) Increment(ctx context.Context, key string) (int64, error) 
 
 	var val int64 = 0
 	if item, exists := m.items[key]; exists {
-		val = bytesToInt64(item.value)
+		if !item.expiresAt.IsZero() && time.Now().After(item.expiresAt) {
+			// Remove expired key before incrementing
+			delete(m.items, key)
+		} else {
+			val = bytesToInt64(item.value)
+		}
 	}
 
 	val++
@@ -98,7 +105,12 @@ func (m *MemoryCache) IncrementWithTTL(ctx context.Context, key string, exp time
 
 	var val int64 = 0
 	if item, exists := m.items[key]; exists {
-		val = bytesToInt64(item.value)
+		if !item.expiresAt.IsZero() && time.Now().After(item.expiresAt) {
+			// Remove expired key
+			delete(m.items, key)
+		} else {
+			val = bytesToInt64(item.value)
+		}
 	}
 
 	val++
@@ -293,14 +305,14 @@ func bytesToInt64(b []byte) int64 {
 }
 
 func (m *MemoryCache) ValuesByKeys(ctx context.Context, keys []string) ([]interface{}, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	var result []interface{}
 	for _, k := range keys {
-		bytes, found, err := m.Get(ctx, k)
-		if err != nil {
-			return nil, err
-		}
+		item, found := m.items[k]
 		if found {
-			result = append(result, bytes)
+			result = append(result, item.value)
 		} else {
 			result = append(result, nil)
 		}

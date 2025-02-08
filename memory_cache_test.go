@@ -6,6 +6,81 @@ import (
 	"time"
 )
 
+func TestMemoryCache(t *testing.T) {
+	ctx := context.Background()
+	cache := NewMemoryCache()
+
+	// Test Store and Get
+	t.Run("Store and Get", func(t *testing.T) {
+		key := "testKey"
+		value := []byte("testValue")
+		err := cache.Store(ctx, key, value, 5*time.Second)
+		if err != nil {
+			t.Fatalf("Failed to store value: %v", err)
+		}
+
+		storedValue, found, err := cache.Get(ctx, key)
+		if err != nil || !found || string(storedValue) != string(value) {
+			t.Fatalf("Expected %s, got %s", value, storedValue)
+		}
+	})
+
+	// Test Expiration
+	t.Run("Expiration", func(t *testing.T) {
+		key := "expireKey"
+		value := []byte("expireValue")
+		cache.Store(ctx, key, value, 1*time.Second)
+		time.Sleep(2 * time.Second)
+		_, found, _ := cache.Get(ctx, key)
+		if found {
+			t.Fatalf("Expected key to expire, but it still exists")
+		}
+	})
+
+	// Test Delete
+	t.Run("Delete", func(t *testing.T) {
+		key := "deleteKey"
+		value := []byte("deleteValue")
+		cache.Store(ctx, key, value, 10*time.Second)
+		cache.Delete(ctx, key)
+		_, found, _ := cache.Get(ctx, key)
+		if found {
+			t.Fatalf("Expected key to be deleted, but it still exists")
+		}
+	})
+
+	// Test Increment
+	t.Run("Increment", func(t *testing.T) {
+		key := "counter"
+		cache.Store(ctx, key, []byte("0"), 0)
+		val, err := cache.Increment(ctx, key)
+		if err != nil || val != 1 {
+			t.Fatalf("Expected counter to be 1, got %d", val)
+		}
+	})
+
+	// Test List Operations
+	t.Run("List Operations", func(t *testing.T) {
+		key := "listKey"
+		cache.LPush(ctx, key, []byte("item1"))
+		cache.LPush(ctx, key, []byte("item2"))
+		values, err := cache.LRange(ctx, key, 0, -1)
+		if err != nil || len(values) != 2 || values[0] != "item2" || values[1] != "item1" {
+			t.Fatalf("List operation failed: %v", values)
+		}
+	})
+
+	// Test KeysByPattern
+	t.Run("KeysByPattern", func(t *testing.T) {
+		cache.Store(ctx, "pattern1", []byte("val1"), 10*time.Second)
+		cache.Store(ctx, "pattern2", []byte("val2"), 10*time.Second)
+		keys, err := cache.KeysByPattern(ctx, "pattern*")
+		if err != nil || len(keys) != 2 {
+			t.Fatalf("Expected 2 keys, got %v", keys)
+		}
+	})
+}
+
 func TestMemoryCache_BasicOperations(t *testing.T) {
 	cache := NewMemoryCache()
 	ctx := context.Background()
