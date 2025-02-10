@@ -23,6 +23,12 @@ func NewRedisCache(addr string, password string, db int) *RedisCache {
 	}
 }
 
+func NewRedisCacheV2(client *redis.Client) *RedisCache {
+	return &RedisCache{
+		client: client,
+	}
+}
+
 func (c *RedisCache) Store(ctx context.Context, key string, value []byte, exp time.Duration) error {
 	return c.client.Set(ctx, key, value, exp).Err()
 }
